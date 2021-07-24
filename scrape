@@ -1,0 +1,35 @@
+import requests
+from bs4 import BeautifulSoup as bs
+import pandas as pd
+import csv
+from google.colab import files
+
+
+#grab website
+r= requests.get('https://kith.com/collections/sale-all')
+
+soup= bs(r.content)
+# print(soup.prettify())
+
+
+#scrap time
+file= open('kithsales.csv', 'w')
+writer= csv.writer(file)
+
+#write header names
+writer.writerow(['item name', 'old price', 'new price'])
+
+all_items = soup.find_all('h1', 'product-card__title')
+all_prices = soup.find_all('span', 'product-card__price')
+oldnewprice = all_prices[0].get_text()
+
+number_of_items= len(all_items)
+for x in range(number_of_items):
+  item_name= all_items[x].text
+  old_price= all_prices[x].get_text().split('$')[1]
+  new_price= all_prices[x].get_text().split('$')[2]
+
+  writer.writerow([item_name, old_price, new_price])
+
+file.close()
+files.download('kithsales.csv') 
