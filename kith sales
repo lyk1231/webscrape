@@ -17,19 +17,30 @@ file= open('kithsales.csv', 'w')
 writer= csv.writer(file)
 
 #write header names
-writer.writerow(['item name', 'old price', 'new price'])
+writer.writerow(['link', 'item name', 'old price', 'new price'])
 
+all_links= soup.find_all('a', 'product-card__link')
 all_items = soup.find_all('h1', 'product-card__title')
 all_prices = soup.find_all('span', 'product-card__price')
-oldnewprice = all_prices[0].get_text()
 
 number_of_items= len(all_items)
 for x in range(number_of_items):
+  link= 'kith.com' + all_links[x]['href']
   item_name= all_items[x].text
-  old_price= all_prices[x].get_text().split('$')[1]
-  new_price= all_prices[x].get_text().split('$')[2]
+  old_price= all_prices[x].get_text().split('$')[1].replace(',', '')
+  new_price= all_prices[x].get_text().split('$')[2].replace(',', '')
 
-  writer.writerow([item_name, old_price, new_price])
+  writer.writerow([link, item_name, old_price, new_price])
 
 file.close()
+
+
+#calculate discount
+df= pd.read_csv('kithsales.csv')
+print(df.dtypes)
+
+df['discount']= 1 - (df['new price']/df['old price'])
+
+df.to_csv('kithsales.csv', sep=',', index=False)
+
 files.download('kithsales.csv') 
