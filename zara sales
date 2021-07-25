@@ -1,0 +1,49 @@
+import requests
+from bs4 import BeautifulSoup as bs
+import pandas as pd
+import csv
+from google.colab import files
+
+
+#!!! Access denied; so used function extract_source
+
+url= 'https://www.zara.com/us/en/man-trend-1-l835.html?v1=1862426'
+
+def extract_source(url):
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:50.0) Gecko/20100101 Firefox/50.0'}
+    source=requests.get(url, headers=headers)
+    return source
+  
+soup= bs(extract_source(url).content)
+
+
+file= open('zarasales.csv', 'w')
+writer= csv.writer(file)
+
+#header names
+writer.writerow(['link', 'item name', 'old price', 'new price'])
+
+all_links= soup.find_all('a', 'product-link _item product-grid-product-info__name link')
+all_items= soup.find_all('a', 'product-link _item product-grid-product-info__name link')
+all_old_price= soup.find_all('span', 'price__amount price__amount--old')
+all_new_price= soup.find_all('span', 'price__amount-current')
+
+for x in range(len(all_items)):
+  link= all_links[x]['href']
+  item= all_items[x].find('span').text
+  old_price= all_old_price[x].text.split(' ')[0]
+  new_price= all_new_price[x].text.split(' ')[0]
+
+  writer.writerow([link, item, old_price, new_price])
+
+file.close()
+
+
+df= pd.read_csv('zarasales.csv')
+print(df.dtypes)
+
+df['discount']= 1 - (df['new price']/df['old price'])
+
+df.to_excel('zarasales.xlsx', index=False)
+
+files.download('zarasales.xlsx')
